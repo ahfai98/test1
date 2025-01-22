@@ -1,0 +1,44 @@
+digraph "Webserv UML Updated" {
+    rankdir=TB;
+    size="32,40";
+
+    Socket [
+                label="{\
+                Socket| - _server_fd: int \l- _connection: int \l- _address: struct sockaddr_in \l- _max_try: int\l| \
+                //Orthodox Canonical \
+                \l+ Socket(int domain, int service, int protocol, int port, unsigned long interface): void \
+                \l+ ~Socket(): void \
+                \l+ Socket(const Socket& temp): void \
+                \l+ Socket &operator=(const Socket &temp): Socket \
+                \l //Getters \
+                \l+ getAddress() const: struct sockaddr_in \
+                \l+ getSock() const: int \
+                \l+ getConnection() const: int \
+                \l+ getMaxTry() const: int \
+                \l //Setters \
+                \l+ setConnection(int connection): void \
+                \l+ //Socket Class Functions \
+                \l+ bindConnection(): void\
+                \l+ listenConnection(): void\
+                \l+ acceptConnection(): int\
+                \l+ testConnection(int connection): void \
+                \l \
+                }", shape=record
+            ];
+    HTTPServer [label="{HTTPServer| - activeConnections: list_of_Sockets \l- configuration: ConfigLoader \l- pendingRequests: queue_of_HTTPRequests \l | + loadConfiguration(filePath: string): void \l+ start(): void \l+ stop(): void \l+ acceptConnection(socket: Socket): void \l}", shape=record];
+    ConfigLoader [label="{ConfigLoader| - filePath: string \l- settings: map_of_string_string \l | + load(filePath: string): void \l+ get(key: string): string \l+ validate(): bool \l}", shape=record];
+    HTTPRequestHandler [label="{HTTPRequestHandler| - clientConnection: Socket \l- incomingRequest: HTTPRequest \l- outgoingResponse: HTTPResponse \l | + handle(): void \l+ validate(request: HTTPRequest): bool \l+ generateResponse(): void \l}", shape=record];
+    HTTPRequest [label="{HTTPRequest| - method: string \l- url: string \l- headers: map_of_string_string \l- body: string \l | + parse(rawData: string): void \l+ getHeader(key: string): string \l}", shape=record];
+    HTTPResponse [label="{HTTPResponse| - statusCode: int \l- headers: map_of_string_string \l- body: string \l | + setHeader(key: string, value: string): void \l+ setStatus(code: int): void \l+ build(): string \l}", shape=record];
+    ScriptExecutor [label="{ScriptExecutor| - scriptPath: string \l- environmentVariables: map_of_string_string \l | + execute(request: HTTPRequest): HTTPResponse \l+ setEnvironment(key: string, value: string): void \l}", shape=record];
+    SessionController [label="{SessionController| - sessionStore: map_of_string_map_of_string_string \l | + createSession(sessionId: string): void \l+ getSessionData(sessionId: string): map_of_string_string \l+ destroySession(sessionId: string): void \l}", shape=record];
+    LogManager [label="{LogManager| - logFile: string \l | + logInfo(message: string): void \l+ logError(message: string): void \l+ logDebug(message: string): void \l}", shape=record];
+
+    HTTPServer -> ConfigLoader [label="uses"];
+    HTTPServer -> HTTPRequestHandler [label="delegates to"];
+    HTTPRequestHandler -> HTTPRequest [label="parses"];
+    HTTPRequestHandler -> HTTPResponse [label="builds"];
+    HTTPRequestHandler -> ScriptExecutor [label="invokes"];
+    HTTPRequestHandler -> SessionController [label="manages"];
+    HTTPServer -> LogManager [label="logs to"];
+}
