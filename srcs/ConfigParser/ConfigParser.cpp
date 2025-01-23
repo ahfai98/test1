@@ -301,8 +301,8 @@ void ConfigParser::handleListen(size_t &i, Server &server, std::vector<std::stri
 {
 	if (server.getLocationSetFlag() == true)
 		throw  ErrorException("parameters after location");
-	std::string ip;
-	uint16_t port;
+	std::string ip = "127.0.0.1";
+	uint16_t port = 8000;
 	WebServer::Utils::checkFinalToken(parameters[++i]);
 	size_t colon_pos = parameters[i].find(":");
 	if (colon_pos != std::string::npos)

@@ -37,7 +37,7 @@ WebServer::Logger& WebServer::Logger::operator=(const Logger &other)
 }
 
 WebServer::Logger* WebServer::Logger::instancePtr = NULL; /**< Static pointer to the Singleton instance of Logger. */
-pthread_mutex_t WebServer::Logger::mtx = PTHREAD_MUTEX_initialiseR; /**< Mutex to ensure thread safety during Singleton instance creation. */
+pthread_mutex_t WebServer::Logger::mtx = PTHREAD_MUTEX_INITIALIZER; /**< Mutex to ensure thread safety during Singleton instance creation. */
 
 /**
  * @brief Retrieves the Singleton instance of the Logger class.

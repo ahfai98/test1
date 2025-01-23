@@ -61,6 +61,7 @@ class Server
 		void setMaxSizeFlag(bool flag);
 		void setServerDefaultValues();
 		void setLocationsDefaultValues();
+		void setServerAddress(std::string host, uint16_t port);
 
 		//getter
 		const std::string 					&getServerName() const;
@@ -74,6 +75,7 @@ class Server
 		const bool							&getLocationSetFlag() const;
 		const bool							&getAutoIndexFlag() const;
 		const bool							&getMaxSizeFlag() const;
+		const struct sockaddr_in 			&getServerAddress() const;
 		const std::vector< std::pair<std::string, uint16_t> >	&getHostPortPairs() const;
 		
 		//getter for Response

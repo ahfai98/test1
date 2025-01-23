@@ -4,8 +4,7 @@
 #include "../Utils/Utils.hpp"
 #include "../ConfigParser/Server.hpp"
 
- // setup and run servers using config file
- // establis new connections with clients and receive/send requests/responses.
+ //Setup servers and route requests and responses
 class Router
 {
 	public:
@@ -16,13 +15,14 @@ class Router
 		
 	private:
 		std::vector<Server> _servers;
-		std::map<int, Server> _servers_map;
 		//std::map<int, Client> _clients_map;
 		fd_set	_recv_fd_pool;
 		fd_set	_write_fd_pool;
 		int		_biggest_fd;
+		std::map<int, std::vector<Server> > fds_to_servers_map;
+		std::map<std::pair<std::string, uint16_t>, int> pairs_to_fds_map;
 
-		void acceptNewConnection(Server &);
+		void acceptNewConnection(int listen_fd);
 		//void checkTimeout();
 		void initialiseSets();
 		/*
@@ -34,8 +34,8 @@ class Router
 		void closeConnection(const int);
 		void assignServer(Client &);
 		*/
-		void addToSet(const int , fd_set &);
-		void removeFromSet(const int , fd_set &);
+		void addToFdSet(const int fd, fd_set &fdset);
+		void removeFromFdSet(const int fd, fd_set &fdset);
 };
 
 #endif

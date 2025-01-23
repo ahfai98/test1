@@ -227,6 +227,14 @@ void Server::setLocationsDefaultValues()
 	}	
 }
 
+void Server::setServerAddress(std::string host, uint16_t port)
+{
+	memset(&(_server_address), 0, sizeof(_server_address));
+	_server_address.sin_family = AF_INET;
+	inet_pton(AF_INET, host.c_str(), &_server_address.sin_addr);
+	_server_address.sin_port = htons(port);
+}
+
 //Getter
 const std::string &Server::getServerName() const
 {
@@ -286,6 +294,11 @@ const bool &Server::getMaxSizeFlag() const
 const std::vector< std::pair<std::string, uint16_t> > &Server::getHostPortPairs() const
 {
 	return (this->_host_port_pairs);
+}
+
+const struct sockaddr_in &Server::getServerAddress() const
+{
+	return (this->_server_address);
 }
 
 // helper functions for Response

@@ -86,11 +86,11 @@ int WebServer::Utils::ft_stoi(std::string str)
 {
 	std::stringstream ss(str);
 	if (str.length() > 10)
-		throw std::invalid_argument("ft_stoi Error: Input string length exceeds maximum allowed length");
+		throw std::invalid_argument("ft_stoi: Input string length exceeds maximum allowed length");
 	for (size_t i = 0; i < str.length(); ++i)
 	{
 		if(!isdigit(str[i]))
-			throw std::invalid_argument("ft_stoi Error: Input contains non-digit characters");
+			throw std::invalid_argument("ft_stoi: Input contains non-digit characters");
 	}
 	int i;
 	ss >> i;
@@ -170,7 +170,7 @@ std::string WebServer::Utils::getConfigFilePath(int argc, char** argv)
 }
 
 // Helper function to initialise the vector
-std::vector<std::pair<short, std::string> > initialiseStatusCodes()
+std::vector<std::pair<short, std::string> > WebServer::Utils::initialiseStatusCodes()
 {
 	std::vector<std::pair<short, std::string> > codes;
 	codes.push_back(std::make_pair(200, "OK"));

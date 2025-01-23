@@ -33,7 +33,7 @@ $(NAME):		$(OBJS)
 
 $(OBJS_PATH)%.o:	$(SRCS_PATH)%.cpp
 				@mkdir -p $(dir $@)
-				# @echo includes : $(INCLUDES)
+				@echo includes : $(INCLUDES)
 				$(CC) $(CFLAGS) -MMD -MP $(INCLUDES) -c $< -o $@
 
 -include $(DEPS)

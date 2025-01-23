@@ -15,7 +15,6 @@ int main(int argc, char **argv)
 	{
         signal(SIGINT, WebServer::Utils::signalHandler);
 		signal(SIGPIPE, handleSigpipe);
-        HTTPRequest request;
 		std::string configFilePath = WebServer::Utils::getConfigFilePath(argc, argv);
 		ConfigParser	configParser;
 		configParser.extractServerBlocks(configFilePath);
