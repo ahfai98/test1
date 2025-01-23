@@ -16,7 +16,7 @@ class Location
 		std::vector<short>			_methods;
 		std::string					_return;
 		std::string					_alias;
-		std::vector<std::string>	_cgi_exec_path;
+		std::vector<std::string>	_cgi_path;
 		std::vector<std::string>	_cgi_ext;
 		unsigned long				_client_max_body_size;
 		bool						methods_flag;

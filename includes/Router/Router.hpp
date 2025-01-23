@@ -12,6 +12,7 @@ class Router
 		~Router();
 		void	setupServers(std::vector<Server>);
 		void	runServers();
+		void printRouterDetails();
 		
 	private:
 		std::vector<Server> _servers;

@@ -86,11 +86,11 @@ int WebServer::Utils::ft_stoi(std::string str)
 {
 	std::stringstream ss(str);
 	if (str.length() > 10)
-		throw std::invalid_argument("ft_stoi: Input string length exceeds maximum allowed length");
+		throw std::invalid_argument("ft_stoi: Input string length exceeds maximum allowed length" + str);
 	for (size_t i = 0; i < str.length(); ++i)
 	{
 		if(!isdigit(str[i]))
-			throw std::invalid_argument("ft_stoi: Input contains non-digit characters");
+			throw std::invalid_argument("ft_stoi: Input contains non-digit characters" + str);
 	}
 	int i;
 	ss >> i;
@@ -145,7 +145,7 @@ std::string WebServer::Utils::readFile(const std::string &path)
  * Example : "/www/html/path" where "/www/html/" is abs_path_part, while "path" is rel_path
  * @return  A string with the file contents.
  */
-bool WebServer::Utils::checkFileIsReadable(const std::string &abs_path_part, const std::string &rel_path)
+bool WebServer::Utils::checkFileIsReadable(std::string abs_path_part, std::string rel_path)
 {
 	std::string fullPath1 = rel_path;
 	std::string fullPath2 = abs_path_part + rel_path;
@@ -203,7 +203,7 @@ std::string WebServer::Utils::statusCodeString(short statusCode)
 	return ("Undefined");
 }
 
-void WebServer::Utils::checkFinalToken(std::string parameters)
+void WebServer::Utils::checkFinalToken(std::string &parameters)
 {
 	size_t pos = parameters.rfind(';');
 	if (pos != parameters.size() - 1)
@@ -211,41 +211,52 @@ void WebServer::Utils::checkFinalToken(std::string parameters)
 	parameters.erase(pos);
 }
 
-bool WebServer::Utils::isPrivateIP(const std::string& ip)
+bool WebServer::Utils::isValidPort(const int &port)
 {
-	return (ip.find("10.") == 0) ||
-		   (ip.find("192.168.") == 0) ||
-		   (ip.find("172.") == 0 && ip.size() > 4 && (ip[4] >= '1' && ip[4] <= '3'));
-}
-
-bool WebServer::Utils::isLoopbackIP(const std::string& ip)
-{
-	return (ip.substr(0, 4) == "127.");
+	return (port >= 1024 && port <= 65535);
 }
 
 bool WebServer::Utils::isValidIP(const std::string& ip)
 {
 	std::istringstream ss(ip);
 	std::string part;
-	int dotcount = 0;
+	int partCount = 0;
 
 	while (std::getline(ss, part, '.'))
 	{
-		for (size_t i = 0; i < part.size(); ++i) 
+		for (size_t i = 0; i < part.size(); ++i)
 		{
 			if (!std::isdigit(part[i]))
-				return (false);
+				return false;
 		}
 
 		int num = std::atoi(part.c_str());
 		if (num < 0 || num > 255)
-			return (false);
-		dotcount++;
+			return false;
+
+		partCount++;
 	}
-	return (dotcount == 3);
+	return (partCount == 4);
 }
 
-bool WebServer::Utils::isValidPort(const int &port)
+bool WebServer::Utils::isPrivateIP(const std::string& ip)
 {
-	return (port >= 1024 && port <= 65535);
+	std::istringstream ss(ip);
+	std::string part;
+	std::vector<int> octets;
+
+	while (std::getline(ss, part, '.'))
+		octets.push_back(std::atoi(part.c_str()));
+
+	if (octets.size() != 4)
+		return false;
+
+	return (octets[0] == 10) ||
+		   (octets[0] == 192 && octets[1] == 168) ||
+		   (octets[0] == 172 && octets[1] >= 16 && octets[1] <= 31);
+}
+
+bool WebServer::Utils::isLoopbackIP(const std::string& ip)
+{
+	return (ip.substr(0, 4) == "127.");
 }

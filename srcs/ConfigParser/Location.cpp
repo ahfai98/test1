@@ -30,7 +30,7 @@ Location &Location::operator=(const Location &src)
 		this->_root = src._root;
 		this->_autoindex = src._autoindex;
 		this->_index = src._index;
-		this->_cgi_exec_path = src._cgi_exec_path;
+		this->_cgi_path = src._cgi_path;
 		this->_cgi_ext = src._cgi_ext;
 		this->_return = src._return;
 		this->_alias = src._alias;
@@ -106,7 +106,7 @@ void Location::setAlias(std::string alias)
 
 void Location::setCgiPath(std::vector<std::string> path)
 {
-	this->_cgi_exec_path = path;
+	this->_cgi_path = path;
 }
 
 void Location::setCgiExtension(std::vector<std::string> ext)
@@ -186,7 +186,7 @@ const std::string &Location::getAlias() const
 
 const std::vector<std::string> &Location::getCgiPath() const
 {
-	return (this->_cgi_exec_path);
+	return (this->_cgi_path);
 }
 
 const std::vector<std::string> &Location::getCgiExtension() const
@@ -238,10 +238,10 @@ void Location::printLocationDetails() const
 	std::cout << "Alias: " << _alias << std::endl;
 
 	std::cout << "CGI Exec Paths: ";
-	for (size_t i = 0; i < _cgi_exec_path.size(); ++i)
+	for (size_t i = 0; i < _cgi_path.size(); ++i)
 	{
-		std::cout << _cgi_exec_path[i];
-		if (i < _cgi_exec_path.size() - 1)
+		std::cout << _cgi_path[i];
+		if (i < _cgi_path.size() - 1)
 			std::cout << ", ";
 	}
 	std::cout << std::endl;

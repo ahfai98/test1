@@ -59,7 +59,7 @@ namespace WebServer
 			static int ft_stoi(std::string str);
 
 			static std::string readFile(const std::string &path);
-        	static bool checkFileIsReadable(const std::string &abs_path_part, const std::string &rel_path);
+        	static bool checkFileIsReadable(std::string abs_path_part, std::string rel_path);
 			
 			static PathType getPathType(const std::string &path);
 
@@ -67,7 +67,7 @@ namespace WebServer
 			static std::vector<std::pair<short, std::string> > initialiseStatusCodes();
 
         	static std::string getConfigFilePath(int argc, char** argv);
-			static void	checkFinalToken(std::string parameters);
+			static void	checkFinalToken(std::string &parameters);
 			static bool isPrivateIP(const std::string &ip);
 			static bool isLoopbackIP(const std::string &ip);
 			static bool isValidIP(const std::string &ip);

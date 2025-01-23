@@ -13,10 +13,10 @@ void Router::setupServers(std::vector<Server> servers)
 	_servers = servers;
 	for (size_t i = 0; i < _servers.size(); ++i)
 	{
-		std::vector<std::pair<std::string, uint16_t> > tmp = _servers[i].getHostPortPairs();
-		for (size_t j = 0; j < tmp.size(); ++j)
+		Server tmp = _servers[i];
+		for (size_t j = 0; j < tmp.getHostPortPairs().size(); ++j)
 		{
-            std::pair<std::string, uint16_t> pair = tmp[j];
+            std::pair<std::string, uint16_t> pair = tmp.getHostPortPairs()[j];
             int used_fd = 0;
 
             // Check if the host-port pair is already used
@@ -53,6 +53,15 @@ void Router::setupServers(std::vector<Server> servers)
 			{
                 // Reuse the existing socket
                 _servers[i].addListenFds(used_fd);
+				for (std::map<int, std::vector<Server> >::iterator it = fds_to_servers_map.begin();
+				it != fds_to_servers_map.end(); ++it)
+				{
+					for (size_t j = 0; j < it->second.size() ; ++j)
+					{
+						if (it->second[j].getServerName() == _servers[i].getServerName())
+							throw std::invalid_argument("Duplicate Server Name and Host:Port pair");
+					}
+				}
 				fds_to_servers_map[used_fd].push_back(_servers[i]);
             }
 		}
@@ -100,9 +109,6 @@ void	Router::runServers()
 			logManager->logMsg(RED, "webserv: select error %s   Closing ....", strerror(errno));
 			exit(1);
 		}
-		//FD_ISSET(int d, fd_set *set)
-		// Returns non-zero if the fd is part of the set and ready for I/O
-		// returns 0 if the fd is not part of the set or not ready for I/O
 		for (int i = 0; i <= _biggest_fd; ++i)
 		{
 			//accept client connection if fd from server side and receive set
@@ -227,4 +233,18 @@ void	Router::removeFromFdSet(const int i, fd_set &set)
 	FD_CLR(i, &set);
 	if (i == _biggest_fd)
 		_biggest_fd--;
+}
+
+// print Router details
+void	Router::printRouterDetails()
+{
+	for(size_t i = 0; i < this->_servers.size(); ++i)
+		this->_servers[i].printServerDetails();
+
+	for (std::map<int, std::vector<Server> >::const_iterator it = fds_to_servers_map.begin(); it != fds_to_servers_map.end(); ++it)
+	{
+    	std::cout << "Fd: " << it->first << std::endl;
+    	for (std::vector<Server>::const_iterator vec_it = it->second.begin(); vec_it != it->second.end(); ++vec_it)
+        	std::cout << vec_it->getServerName() << std::endl;
+	}
 }

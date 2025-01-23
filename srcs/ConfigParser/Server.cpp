@@ -39,6 +39,7 @@ Server &Server::operator=(const Server &src)
 		this->autoindex_flag = src.autoindex_flag;
 		this->maxsize_flag = src.maxsize_flag;
 		this->_listen_fds = src._listen_fds;
+		this->_host_port_pairs = src._host_port_pairs;
 	}
 	return (*this);
 }
@@ -162,7 +163,7 @@ void Server::parseLocationBlocks(std::string path, std::vector<std::string> para
 	handlers["return"] = &Server::handleReturn;
 	handlers["alias"] = &Server::handleAlias;
 	handlers["cgi_ext"] = &Server::handleCgiExt;
-	handlers["cgi_exec_path"] = &Server::handleCgiPath;
+	handlers["cgi_path"] = &Server::handleCgiPath;
 	handlers["client_max_body_size"] = &Server::handleClientMaxBodySize;
 	
 	new_location.setPath(path);
@@ -179,7 +180,13 @@ void Server::parseLocationBlocks(std::string path, std::vector<std::string> para
 			throw ErrorException("Invalid parameters for location :" + parameters[i]);
 	}
 	if (new_location.getPath() != "/cgi-bin" && new_location.getIndex().empty())
-		new_location.setIndex(this->_index); //set index
+		new_location.setIndex(this->_index);
+	if (new_location.getRoot() == "")
+		new_location.setRoot(this->_root);
+	if (new_location.getAutoindex() == false && new_location.getAutoIndexFlag() == false)
+		new_location.setAutoindex(this->_autoindex? "on" : "off");
+	if (new_location.getIndex() == "")
+		new_location.setIndex(this->_index);
 	checkLocation(new_location);
 	this->_locations.push_back(new_location);
 }
@@ -406,13 +413,13 @@ void Server::checkLocation(Location &location) const
 	else
 	{
 		if (!checkLocationPath(location.getPath()))
-			throw ErrorException("Invalid path for location");
-		if (!WebServer::Utils::checkFileIsReadable(location.getRoot() + location.getPath() + "/", location.getIndex()))
-			throw ErrorException("Invalid Index for location");
-		if (!location.getReturn().empty() && !WebServer::Utils::checkFileIsReadable(location.getRoot(), location.getReturn()))
-			throw ErrorException("Invalid Return for location");
+			throw ErrorException("Invalid path for location" + location.getPath());
+		if (location.getReturn().empty() && !WebServer::Utils::checkFileIsReadable(location.getRoot() + location.getPath() + "/", location.getIndex()))
+		{
+			throw ErrorException("Invalid Index for location" + location.getPath());
+		}
 		if (!location.getAlias().empty() && !WebServer::Utils::checkFileIsReadable(location.getRoot(), location.getAlias()))
-			 	throw ErrorException("Invalid Alias for location");
+			 	throw ErrorException("Invalid Alias for location" + location.getPath());
 	}
 }
 
@@ -471,7 +478,8 @@ void Server::handleRoot(size_t &i, Location& new_location, std::vector<std::stri
 {
 	if (!new_location.getRoot().empty()) //check if root is already set
 		throw ErrorException("Root of location is duplicated");
-	WebServer::Utils::checkFinalToken(parameters[++i]);
+	i++;
+	WebServer::Utils::checkFinalToken(parameters[i]);
 	if (WebServer::Utils::getPathType(parameters[i]) == IS_DIRECTORY) //if directory
 		new_location.setRoot(parameters[i]);
 	else
@@ -508,7 +516,8 @@ void Server::handleAutoIndex(size_t &i, Location& new_location, std::vector<std:
 		throw ErrorException("parameters autoindex not allow for CGI");
 	if (new_location.getAutoIndexFlag()) //check if autoindex already set
 		throw ErrorException("Autoindex of location is duplicated");
-	WebServer::Utils::checkFinalToken(parameters[++i]);
+	i++;
+	WebServer::Utils::checkFinalToken(parameters[i]);
 	new_location.setAutoindex(parameters[i]);
 	new_location.setAutoindexFlag(true);
 }
@@ -518,7 +527,8 @@ void Server::handleIndex(size_t &i, Location& new_location, std::vector<std::str
 	//check if index already set
 	if (!new_location.getIndex().empty()) 
 		throw ErrorException("Index of location is duplicated");
-	WebServer::Utils::checkFinalToken(parameters[++i]);
+	i++;
+	WebServer::Utils::checkFinalToken(parameters[i]);
 	new_location.setIndex(parameters[i]);
 }
 
@@ -529,7 +539,8 @@ void Server::handleAlias(size_t &i, Location& new_location, std::vector<std::str
 	//check if alias already set
 	if (!new_location.getAlias().empty())
 		throw ErrorException("Alias of location is duplicated");
-	WebServer::Utils::checkFinalToken(parameters[++i]);
+	i++;
+	WebServer::Utils::checkFinalToken(parameters[i]);
 	new_location.setAlias(parameters[i]);
 }
 
@@ -540,8 +551,37 @@ void Server::handleReturn(size_t &i, Location& new_location, std::vector<std::st
 	//check if return already set
 	if (!new_location.getReturn().empty())
 		throw ErrorException("Return of location is duplicated");
-	WebServer::Utils::checkFinalToken(parameters[++i]);
-	new_location.setReturn(parameters[i]);
+	i++;
+	if (parameters[i].find(';') != std::string::npos)
+	{
+		WebServer::Utils::checkFinalToken(parameters[i]);
+		new_location.setReturn(parameters[i]);
+	}
+	else
+	{
+		if (i == parameters.size() -1)
+			throw ErrorException("Missing value for return");
+		WebServer::Utils::checkFinalToken(parameters[i + 1]);
+		std::string ret = parameters[i] + parameters[i + 1];
+		//validate return
+		bool valid_code = true;
+		if (parameters[i].length() != 3)
+			valid_code = false;
+    	for (size_t j = 0; j < parameters[i].size(); ++j)
+		{
+        	if (!std::isdigit(parameters[i][j]))
+				valid_code = false;
+		}
+		int statusCode = WebServer::Utils::ft_stoi(parameters[i].c_str());
+    	if (!(statusCode == 301 || statusCode == 302))
+			valid_code = false;
+		if (parameters[i + 1][0] != '/')
+			valid_code = false;
+		if (valid_code == false)
+			throw ErrorException("Invalid info for return");
+		new_location.setReturn(ret);
+		i++;
+    }
 }
 
 void Server::handleCgiExt(size_t &i, Location& new_location, std::vector<std::string> &parameters)
@@ -597,7 +637,8 @@ void Server::handleClientMaxBodySize(size_t &i, Location& new_location, std::vec
 {
 	if (new_location.getMaxSizeFlag()) //check if max body size already set
 		throw ErrorException("Maxbody_size of location is duplicated");
-	WebServer::Utils::checkFinalToken(parameters[++i]);
+	i++;
+	WebServer::Utils::checkFinalToken(parameters[i]);
 	new_location.setClientMaxBodySize(parameters[i]);
 	new_location.setMaxSizeFlag(true);
 }

@@ -36,7 +36,7 @@ class ConfigParser
 		ConfigParser();
 		~ConfigParser();
 
-		int extractServerBlocks(const std::string &config_file);
+		void extractServerBlocks(const std::string &config_file);
 		void splitServerBlocks(std::string &content);
 		void removeComments(std::string &content);
 		void normaliseSpaces(std::string &content);
@@ -45,7 +45,7 @@ class ConfigParser
 		void parseServerBlock(std::string &config, Server &server);
 		void checkServersDup();
 		std::vector<Server> getServers();
-		int print();
+		void print();
 		void finaliseServer(Server &server);
 		
 		class ErrorException : public std::exception

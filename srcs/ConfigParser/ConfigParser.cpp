@@ -6,54 +6,15 @@ ConfigParser::ConfigParser(): _server_num(0){}
 ConfigParser::~ConfigParser(){}
 
 /* printing parameters of servers from config file */
-int ConfigParser::print()
+void ConfigParser::print()
 {
 	std::cout << "------------- Config -------------" << std::endl;
 	for (size_t i = 0; i < _servers.size(); i++)
-	{
-		std::cout << "Server #" << i + 1 << std::endl;
-		std::cout << "Server name: " << _servers[i].getServerName() << std::endl;
-		std::cout << "Root: " << _servers[i].getRoot() << std::endl;
-		std::cout << "Index: " << _servers[i].getIndex() << std::endl;
-		std::cout << "Max BSize: " << _servers[i].getClientMaxBodySize() << std::endl;
-		std::cout << "Error pages: " << _servers[i].getErrorPages().size() << std::endl;
-		std::map<short, std::string>::const_iterator it = _servers[i].getErrorPages().begin();
-		while (it != _servers[i].getErrorPages().end())
-		{
-			std::cout << (*it).first << " - " << it->second << std::endl;
-			++it;
-		}
-		std::cout << "Locations: " << _servers[i].getLocations().size() << std::endl;
-		std::vector<Location>::const_iterator itl = _servers[i].getLocations().begin();
-		while (itl != _servers[i].getLocations().end())
-		{
-			std::cout << "name location: " << itl->getPath() << std::endl;
-
-			std::cout << "index: " << itl->getIndex() << std::endl;
-			if (itl->getCgiPath().empty())
-			{
-				std::cout << "root: " << itl->getRoot() << std::endl;
-				if (!itl->getReturn().empty())
-					std::cout << "return: " << itl->getReturn() << std::endl;
-				if (!itl->getAlias().empty())
-					std::cout << "alias: " << itl->getAlias() << std::endl;
-			}
-			else
-			{
-				std::cout << "cgi root: " << itl->getRoot() << std::endl;
-				std::cout << "cgi_path: " << itl->getCgiPath().size() << std::endl;
-				std::cout << "cgi_ext: " << itl->getCgiExtension().size() << std::endl;
-			}
-			++itl;
-		}
-		itl = _servers[i].getLocations().begin();
-		std::cout << "-----------------------------" << std::endl;
-	}
-	return (0);
+		_servers[i].printServerDetails();
 }
 
 //read config file, extract and parse server blocks
-int ConfigParser::extractServerBlocks(const std::string &config_file)
+void ConfigParser::extractServerBlocks(const std::string &config_file)
 {
 	std::string		content;
 
@@ -62,7 +23,6 @@ int ConfigParser::extractServerBlocks(const std::string &config_file)
 	if (access(config_file.c_str(), R_OK) == -1)
 		throw ErrorException("File is not accessible");
 	content = WebServer::Utils::readFile(config_file);
-	
 	removeComments(content);
 	normaliseSpaces(content);
 	splitServerBlocks(content);
@@ -72,7 +32,6 @@ int ConfigParser::extractServerBlocks(const std::string &config_file)
 		parseServerBlock(this->_server_blocks[i], server);
 		this->_servers.push_back(server);
 	}
-	return (0);
 }
 
 void ConfigParser::removeComments(std::string &content)
@@ -256,7 +215,7 @@ void ConfigParser::finaliseServer(Server &server)
 		server.setRoot("/");
 	if (server.getIndex().empty())
 		server.setIndex("index.html");
-	if (WebServer::Utils::checkFileIsReadable(server.getRoot(), server.getIndex()) == false)
+	if (!WebServer::Utils::checkFileIsReadable(server.getRoot(), server.getIndex()))
 		throw ErrorException("Index from config file not found or unreadable");
 	if (server.checkLocationsDup())
 		throw ErrorException("Duplicate locations in server configuration");
@@ -265,6 +224,12 @@ void ConfigParser::finaliseServer(Server &server)
 	if (server.getLocationSetFlag() == true)
 		server.setLocationsDefaultValues();
 	checkServersDup();
+	std::vector<Location> location_list = server.getLocations();
+	std::vector<std::string> return_list;
+	for (size_t i = 0; i < location_list.size() ; ++i)
+	{
+
+	}
 }
 
 //Ensure server port, host and name is unique
@@ -303,7 +268,8 @@ void ConfigParser::handleListen(size_t &i, Server &server, std::vector<std::stri
 		throw  ErrorException("parameters after location");
 	std::string ip = "127.0.0.1";
 	uint16_t port = 8000;
-	WebServer::Utils::checkFinalToken(parameters[++i]);
+	i++;
+	WebServer::Utils::checkFinalToken(parameters[i]);
 	size_t colon_pos = parameters[i].find(":");
 	if (colon_pos != std::string::npos)
 	{
@@ -319,7 +285,7 @@ void ConfigParser::handleListen(size_t &i, Server &server, std::vector<std::stri
 			throw std::out_of_range("Port number must be between 1024 and 65535.");
 		// Parse IP
 		if (!(WebServer::Utils::isValidIP(ip) && (WebServer::Utils::isPrivateIP(ip) || WebServer::Utils::isLoopbackIP(ip))))
-			throw std::invalid_argument("IP address must be valid, within the private range, or a loopback address.");
+			throw std::invalid_argument("IP address must be valid, within the private range, or a loopback address." + ip);
 	}
 	//case for no port
 	else if ((WebServer::Utils::isValidIP(parameters[i]) && (WebServer::Utils::isPrivateIP(parameters[i]) || WebServer::Utils::isLoopbackIP(parameters[i]))))
@@ -407,7 +373,8 @@ void ConfigParser::handleErrorPage(size_t &i, Server &server, std::vector<std::s
 
 void ConfigParser::handleServerName(size_t &i, Server &server, std::vector<std::string> &parameters)
 {
-	WebServer::Utils::checkFinalToken(parameters[++i]);
+	i++;
+	WebServer::Utils::checkFinalToken(parameters[i]);
 	if (server.getLocationSetFlag() == true)
 		throw  ErrorException("parameters after location");
 	if (!server.getServerName().empty())
