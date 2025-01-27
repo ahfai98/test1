@@ -20,7 +20,7 @@ void Router::setupServers(std::vector<Server> servers)
             int used_fd = 0;
 
             // Check if the host-port pair is already used
-			for (std::map<std::pair<std::string, uint16_t>, int>::iterator it = pairs_to_fds_map.begin();
+			for (std::map<std::pair<std::string, uint16_t>, int>::const_iterator it = pairs_to_fds_map.begin();
 				it != pairs_to_fds_map.end(); ++it)
 			{
                 if (it->first.first == pair.first && it->first.second == pair.second)
@@ -53,7 +53,7 @@ void Router::setupServers(std::vector<Server> servers)
 			{
                 // Reuse the existing socket
                 _servers[i].addListenFds(used_fd);
-				for (std::map<int, std::vector<Server> >::iterator it = fds_to_servers_map.begin();
+				for (std::map<int, std::vector<Server> >::const_iterator it = fds_to_servers_map.begin();
 				it != fds_to_servers_map.end(); ++it)
 				{
 					for (size_t j = 0; j < it->second.size() ; ++j)
@@ -66,6 +66,7 @@ void Router::setupServers(std::vector<Server> servers)
             }
 		}
 	}
+	std::cout << "All Servers initialised." << std::endl;
 }
 
 /**
@@ -111,7 +112,6 @@ void	Router::runServers()
 		}
 		for (int i = 0; i <= _biggest_fd; ++i)
 		{
-			//accept client connection if fd from server side and receive set
 			if (FD_ISSET(i, &recv_set_cpy) && fds_to_servers_map.count(i))
 			{
 				acceptNewConnection(i);
@@ -209,11 +209,13 @@ void	Router::initialiseSets()
 			logManager->logMsg(RED, "webserv: listen error: %s   Closing....", strerror(errno));
 			exit(EXIT_FAILURE);
 		}
+		/*
 		if (fcntl(it->first, F_SETFL, O_NONBLOCK) < 0)
 		{
 			logManager->logMsg(RED, "webserv: fcntl error: %s   Closing....", strerror(errno));
 			exit(EXIT_FAILURE);
 		}
+		*/
 		addToFdSet(it->first, _recv_fd_pool);
 		_biggest_fd = it->first;
 	}
